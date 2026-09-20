@@ -1,12 +1,9 @@
 """
-exporter.py — turns a ParseResult into export-ready artifacts.
-Every exported value is the exact `result` string — never reformatted.
+exporter.py - turns a ParseResult into export-ready artifacts.
+Every exported value is the exact `result` string.
 """
 import io
-from typing import List
-
 import pandas as pd
-
 from models import ParseResult
 
 
@@ -15,10 +12,7 @@ def organized_dataframe(pr: ParseResult, reported_only: bool = True) -> pd.DataF
     for r in pr.records:
         if reported_only and not r.is_reportable:
             continue
-        row = {
-            "Sample": r.sample_id,
-            "Element": r.element,
-        }
+        row = {"Sample": r.sample_id, "Element": r.element}
         if r.layout == "wide":
             row["Wavelength"] = r.wavelength
             row["Channel"] = r.channel_type
@@ -28,23 +22,14 @@ def organized_dataframe(pr: ParseResult, reported_only: bool = True) -> pd.DataF
         row["Qualifier"] = r.qualifier
         row["Source Line"] = r.source_line
         rows.append(row)
-    df = pd.DataFrame(rows)
-    return df
+    return pd.DataFrame(rows)
 
 
 def pivot_dataframe(pr: ParseResult, reported_only: bool = True) -> pd.DataFrame:
-    """Excel-style grid: one row per Sample, one column per Element (or
-    Element+Wavelength when a wide/multi-channel layout has more than one
-    wavelength per element). Cell values are the exact `result` string —
-    never reformatted. This mirrors how a lab worker would lay results out
-    in Excel by hand."""
     recs = [r for r in pr.records if (r.is_reportable if reported_only else True)]
     if not recs:
         return pd.DataFrame()
 
-    # Decide column label: use "Element" alone unless the same element has
-    # more than one distinct wavelength in this dataset, in which case use
-    # "Element Wavelength" so channels never collide.
     elem_wavelengths = {}
     for r in recs:
         elem_wavelengths.setdefault(r.element, set()).add(r.wavelength)
@@ -54,8 +39,6 @@ def pivot_dataframe(pr: ParseResult, reported_only: bool = True) -> pd.DataFrame
             return f"{r.element} {r.wavelength}"
         return r.element
 
-    # Column header shows the unit too, when every value in that column
-    # shares the same unit (cosmetic header only — cell text is untouched).
     col_units = {}
     for r in recs:
         c = col_label(r)
@@ -108,8 +91,6 @@ def to_clipboard_text(df: pd.DataFrame) -> str:
 
 
 def to_excel_bytes(pr: ParseResult) -> bytes:
-    """Multi-sheet workbook: Summary, Organized Results, Samples, Elements,
-    Data Quality, Processing Log."""
     buf = io.BytesIO()
     organized = organized_dataframe(pr, reported_only=True)
     all_records = organized_dataframe(pr, reported_only=False)
@@ -124,8 +105,11 @@ def to_excel_bytes(pr: ParseResult) -> bytes:
     elements_rows = []
     for elem in sorted({r.element for r in pr.records}):
         recs = [r for r in pr.records if r.element == elem and r.is_reportable]
-        elements_rows.append({"Element": elem, "Result Count": len(recs),
-                               "Samples": len({r.sample_id for r in recs})})
+        elements_rows.append({
+            "Element": elem,
+            "Result Count": len(recs),
+            "Samples": len({r.sample_id for r in recs}),
+        })
     elements_df = pd.DataFrame(elements_rows)
 
     log_rows = [
@@ -137,8 +121,10 @@ def to_excel_bytes(pr: ParseResult) -> bytes:
          "Result": rv.text, "Status": f"Review: {rv.reason}"}
         for rv in pr.review_items
     ]
-    log_df = pd.DataFrame(log_rows).sort_values("Line") if log_rows else pd.DataFrame(
-        columns=["Line", "Sample", "Element", "Value Type", "Result", "Status"]
+    log_df = (
+        pd.DataFrame(log_rows).sort_values("Line")
+        if log_rows
+        else pd.DataFrame(columns=["Line", "Sample", "Element", "Value Type", "Result", "Status"])
     )
 
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:

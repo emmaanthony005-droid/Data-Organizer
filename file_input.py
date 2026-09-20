@@ -1,10 +1,8 @@
 """
-file_input.py — turns an uploaded file into raw text for parser.parse().
+file_input.py - turns an uploaded file into raw text for parser.parse().
 
-Per spec: Excel/CSV/TXT are read as structured data directly (not OCR'd).
-PDF and images fall back to text/table extraction and OCR respectively.
-These are optional conveniences — pasting text is always the primary path
-and never required to go through a file.
+Excel/CSV/TXT are read as structured data directly.
+PDF and images use text/table extraction and OCR respectively.
 """
 import io
 from typing import Tuple
@@ -13,15 +11,12 @@ import pandas as pd
 
 
 def _df_to_text(df: pd.DataFrame) -> str:
-    """Render a dataframe back into tab-separated text so it flows through
-    the same deterministic parser as pasted text (no values are altered —
-    pandas reads cells as strings where possible via dtype=str)."""
     return df.to_csv(sep="\t", index=False)
 
 
 def extract_text(filename: str, file_bytes: bytes) -> Tuple[str, str]:
-    """Returns (raw_text, method_used). Raises ValueError with a clear
-    message on unsupported/unreadable files rather than crashing."""
+    """Returns (raw_text, method_used). Raises ValueError on
+    unsupported/unreadable files."""
     name = filename.lower()
 
     if name.endswith(".txt"):
@@ -39,10 +34,11 @@ def extract_text(filename: str, file_bytes: bytes) -> Tuple[str, str]:
     if name.endswith(".pdf"):
         try:
             import pdfplumber
-        except ImportError as e:
+        except ImportError:
             raise ValueError(
-                "PDF support requires the 'pdfplumber' package (see requirements.txt)."
-            ) from e
+                "PDF support requires the 'pdfplumber' package. "
+                "Install it with: pip install pdfplumber"
+            )
         text_parts = []
         with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
             for page in pdf.pages:
@@ -57,15 +53,16 @@ def extract_text(filename: str, file_bytes: bytes) -> Tuple[str, str]:
         try:
             import pytesseract
             from PIL import Image
-        except ImportError as e:
+        except ImportError:
             raise ValueError(
-                "Image support requires 'pytesseract' + 'Pillow' and a system "
-                "Tesseract OCR install (see requirements.txt / README)."
-            ) from e
+                "Image OCR requires 'pytesseract' + 'Pillow' and a system "
+                "Tesseract OCR install. See README for instructions."
+            )
         img = Image.open(io.BytesIO(file_bytes))
         text = pytesseract.image_to_string(img)
-        return text, "Image OCR (Tesseract) — verify carefully, OCR can misread digits"
+        return text, "Image OCR (Tesseract) -- verify carefully, OCR can misread digits"
 
     raise ValueError(
-        f"Unsupported file type for '{filename}'. Supported: .txt, .csv, .xlsx, .xls, .pdf, .jpg, .jpeg, .png"
+        f"Unsupported file type for '{filename}'. "
+        "Supported: .txt, .csv, .xlsx, .xls, .pdf, .jpg, .jpeg, .png"
     )

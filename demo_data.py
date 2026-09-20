@@ -1,16 +1,11 @@
 """
 demo_data.py
-Two DEMO datasets, one per supported layout. All values are synthetic /
-illustrative. Neither dataset is real laboratory data.
+Two synthetic demo datasets, one per supported layout.
+Neither dataset is real laboratory data.
 """
 
-DEMO_LABEL = "DEMO DATA \u2014 NOT REAL LABORATORY RESULTS"
+DEMO_LABEL = "DEMO DATA -- NOT REAL LABORATORY RESULTS"
 
-# ---------------------------------------------------------------------------
-# 1) BLOCK layout demo — this is the exact required Phase 1 test fixture,
-#    with deliberately inconsistent spacing, mixed "Sample:"/"SAMPLE ID:"
-#    headers, metadata mixed into a block, and a mixed table-style block.
-# ---------------------------------------------------------------------------
 DEMO_BLOCK = f"""# {DEMO_LABEL}
 Sample: S001
 Method: EPA 200.7          Date: 2024-03-11
@@ -28,28 +23,13 @@ SAMPLE ID: S003
 Element  Result   Unit
 Al       9.876    mg/kg
 Fe       76.320   mg/kg
-Cu       «100»    mg/kg
+Cu       \u00ab100\u00bb    mg/kg
+Pb       0.002    mg/kg
+As       <0.005   mg/kg
 """
 
-# ---------------------------------------------------------------------------
-# 2) WIDE (wavelength-export) layout demo — mirrors the structure of a real
-#    ICP-OES/ICP-MS "channel export" (Type / Name / Measurement Date /
-#    Value Type, followed by Element+Wavelength(Channel) columns, a units
-#    row, then per-sample blocks of Replicate 1-3, Min/Max Calibration
-#    Range, Reported, Mean, SD, RSD rows). Values below are synthetic.
-# ---------------------------------------------------------------------------
-_WIDE_HEADER = (
-    "Type\tName\tMeasurement Date\tValue Type\t"
-    "As 189.042 (A)\tCu 324.754 (A)\tCd 214.438 (A)\tPb 220.353 (A)\t"
-    "Zn 213.856 (A)\tCr 267.716 (A)\tAr 404.442 (M)\t"
-)
-_WIDE_UNITS = (
-    "\t\t\t\tConc in ppm\tConc in ppm\tConc in ppm\tConc in ppm\t"
-    "Conc in ppm\tConc in ppm\tConc in -\t"
-)
 
-
-def _demo_wide_block(name: str, date: str, base) -> str:
+def _demo_wide_block(name, date, base):
     reps = [
         [round(v * f, 3) for v in base] for f in (1.00, 0.99, 1.01)
     ]
@@ -75,6 +55,16 @@ def _demo_wide_block(name: str, date: str, base) -> str:
     lines.append(f"\t\t\tRSD\t{rsd_vals}")
     return "\n".join(lines)
 
+
+_WIDE_HEADER = (
+    "Type\tName\tMeasurement Date\tValue Type\t"
+    "As 189.042 (A)\tCu 324.754 (A)\tCd 214.438 (A)\tPb 220.353 (A)\t"
+    "Zn 213.856 (A)\tCr 267.716 (A)\tAr 404.442 (M)\t"
+)
+_WIDE_UNITS = (
+    "\t\t\t\tConc in ppm\tConc in ppm\tConc in ppm\tConc in ppm\t"
+    "Conc in ppm\tConc in ppm\tConc in -\t"
+)
 
 DEMO_WIDE = (
     f"# {DEMO_LABEL}\n"

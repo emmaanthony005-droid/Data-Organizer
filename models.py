@@ -17,25 +17,21 @@ from typing import Dict, List, Optional
 class ResultRecord:
     sample_id: str
     element: str
-    result: str                     # EXACT raw text of the value — never altered
-    unit: str = ""                  # best-effort, cosmetic only
-    wavelength: str = ""            # wide/wavelength layout only, e.g. "189.042"
-    channel_type: str = ""          # e.g. "A" (analyte) / "M" (internal std/monitor)
-    value_type: str = "Result"      # "Result" (block layout) or "Reported"/"Mean"/
-                                     # "SD"/"RSD"/"Replicate 1"/"Min Calibration Range"/... (wide layout)
-    qualifier: str = ""             # '<' '>' '≤' '≥' '«»' 'ND' 'N.D.' if detected — cosmetic tag only
-    numeric_value: Optional[float] = None   # derived, sorting/analytics ONLY
+    result: str                     # EXACT raw text of the value
+    unit: str = ""
+    wavelength: str = ""
+    channel_type: str = ""
+    value_type: str = "Result"
+    qualifier: str = ""
+    numeric_value: Optional[float] = None
     source_line: int = 0
     source_text: str = ""
-    layout: str = "block"           # "block" | "wide"
-    confidence: str = "confident"   # "confident" | "review"
+    layout: str = "block"
+    confidence: str = "confident"
     review_reason: str = ""
 
     @property
     def is_reportable(self) -> bool:
-        """True for the row(s) that represent the lab's quoted/reported value
-        for this sample+element (as opposed to raw replicates, Mean/SD/RSD,
-        or calibration-range QC rows in the wide layout)."""
         if self.layout == "block":
             return True
         return self.value_type == "Reported"

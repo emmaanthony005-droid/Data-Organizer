@@ -1,12 +1,6 @@
-streamlit>=1.35
+flask>=3.0
 pandas>=2.0
 openpyxl>=3.1
-XlsxWriter>=3.0
-
-# Optional — only needed for PDF / image upload support (paste-text and
-# CSV/XLSX/TXT upload work without these):
 pdfplumber>=0.10
-pytesseract>=0.3
 Pillow>=10.0
-# pytesseract also requires the Tesseract OCR *system* binary installed
-# separately (not a pip package): https://github.com/tesseract-ocr/tesseract
+pytesseract>=0.3
